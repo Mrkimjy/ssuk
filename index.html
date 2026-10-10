@@ -612,6 +612,7 @@ input{font-family:inherit}
       <div class="adm"><input id="adm-lv" type="number" min="1" max="100" placeholder="레벨 (1~100)"><button class="kbtn blue" data-act="adm-lv">적용</button></div>
       <div class="adm"><input id="adm-xp" type="number" min="1" placeholder="추가 XP"><button class="kbtn blue" data-act="adm-xp">추가</button></div>
       <div class="hint">코스 열림: 새싹 Lv1 · 견습 Lv11 · 정예 Lv31 · 수호 Lv51 · 전설 Lv71</div>
+      <div class="hint" style="color:#b4442f">⚠️ 관리자 기능을 한 번이라도 쓰면 이 기록은 <b>순위표에서 빠져요.</b> (새 캐릭터로 다시 시작하면 해제)</div>
     </div>
     <div class="panel">
       <div class="panel-h"><div class="panel-t">📦 기록 옮기기</div><span class="chip">다른 기기·앱으로</span></div>
@@ -1222,6 +1223,7 @@ async function rankInit(){
   }catch(e){RANK.state='off';rankRefresh();}
 }
 async function rankPush(remove){
+  if(S.adm&&!remove)return rankPush(true);
   if(RANK.sb)return sbPush(remove);
   if(RANK.state!=='on'||!S.char)return;if(RANK.busy){RANK.again=true;return;}RANK.busy=true;
   const pid=ensurePid();const r=myRow();
@@ -1230,9 +1232,12 @@ async function rankPush(remove){
   try{await ref.update(body);}catch(e){if(e&&e.code==='invalid_argument'){try{await ref.set(body);}catch(e2){if(e2&&e2.code==='invalid_argument')RANK.state='ro';}}}
   RANK.busy=false;if(RANK.again){RANK.again=false;rankPush();}
 }
+const ADM_H='n047uorewn';
+function admHash(s){let a=0xdeadbeef^0,b=0x41c6ce57^0;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677);}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return (4294967296*(2097151&b)+(a>>>0)).toString(36);}
+function admMark(){if(S.adm)return;S.adm=1;save();rankPush(true);toast('🛠 이 기록은 이제 순위표에서 빠져요');}
 function rankList(mode){
   const wk=weekKey();let rows=RANK.rows.filter(r=>!(r.uid===RANK.uid&&r.pid===S.pid));
-  if(S.char&&S.nick)rows.push(myRow());
+  if(S.char&&S.nick&&!S.adm)rows.push(myRow());
   if(mode==='week')rows=rows.map(r=>({...r,score:r.me?r.weekXP:(r.weekKey===wk?r.weekXP:0)})).filter(r=>r.me||r.score>0);
   else if(mode==='fair')rows=rows.map(r=>({...r,score:r.me?r.fairWk:(r.fairKey===wk?r.fairWk:0)})).filter(r=>r.me||r.score>0);
   else rows=rows.map(r=>({...r,score:r.totalXP}));
@@ -1254,6 +1259,7 @@ function renderRank(){
   else if(RANK.state==='loading')st.innerHTML='순위를 불러오는 중…';
   else if(RANK.sb)st.innerHTML='📶 인터넷에 연결되면 다른 여행자 순위가 보여요. 지금은 내 기록만 보여요.';
   else st.innerHTML='📴 설치한 앱에서는 내 기록만 보여요. 기록은 이 폰에 저장돼요.';
+  if(S.adm)st.innerHTML+='<br>🛠 관리자 기능을 쓴 기록이라 이 기기의 기록은 순위에 올라가지 않아요.';
   const l=rankList(mode);const me=l.findIndex(r=>r.me);
   $('rk-me').innerHTML=me<0?'':'<div class="rk-mine"><span class="rk-n disp">'+(me+1)+'<small>위</small></span><span class="rk-mi"><b>'+esc(S.nick||'여행자')+'</b>'+(S.mapae?mpBadge(S.mapae,16):'')+'<span>'+(mode==='fair'?'이번 주 공정 '+l[me].score.toLocaleString()+'점 · 실력 지수 '+Math.round(S.elo||900):(mode==='week'?'이번 주 ':'누적 ')+l[me].score.toLocaleString()+' XP')+' · 참가 '+l.length+'명</span></span></div>';
   const list=$('rk-list');
@@ -1490,7 +1496,7 @@ function bannerInit(){if(bannerOn||!AIT||!ADS.banner||!AIT.TossAds||!fnOk(AIT.To
   const attach=()=>{try{AIT.TossAds.attachBanner(ADS.banner,el,{theme:'light',variant:'card'});}catch(e){el.hidden=true;}};
   try{if(fnOk(AIT.TossAds.initialize))AIT.TossAds.initialize({callbacks:{onInitialized:attach,onInitializationFailed:()=>{el.hidden=true;}}});else attach();}catch(e){el.hidden=true;}}
 function lbOn(){return !!(AIT&&AIT.Game&&fnOk(AIT.Game.setLeaderboardScore));}
-function lbSubmit(){if(!lbOn())return;try{AIT.Game.setLeaderboardScore({score:String(S.totalXP||0)}).catch(()=>{});}catch(e){}}
+function lbSubmit(){if(!lbOn()||S.adm)return;try{AIT.Game.setLeaderboardScore({score:String(S.totalXP||0)}).catch(()=>{});}catch(e){}}
 function lbOpen(){if(!(AIT&&AIT.Game&&fnOk(AIT.Game.openLeaderboard))){toast('토스 앱을 최신 버전으로 업데이트해 주세요');return;}try{AIT.Game.openLeaderboard().catch(()=>{});}catch(e){}}
 
 let R=null;
@@ -1768,9 +1774,10 @@ document.addEventListener('click',e=>{
     case 'imp-ok':{const d=importCode($('imp-box').value);if(d&&S.pid&&RANK.sb)rankRemove(S.pid);if(d&&applySave(d)){pendingChar=S.char;pendingFit=S.outfit||'base';save();closeModal();rankPush();show('home');toast('📦 기록을 불러왔어요!',true);}break;}
     case 'reset-ask':openModal('<div class="panel-t" style="margin-bottom:8px">정말 초기화할까요?</div><div style="font-size:.86rem;color:var(--muted);line-height:1.6">레벨, 기록, 오답 노트가 모두 지워지고 되돌릴 수 없어요.</div><div style="display:flex;gap:8px;margin-top:14px"><button class="kbtn ghost" data-act="modal-close">취소</button><button class="kbtn red" data-act="reset-yes">초기화</button></div>');break;
     case 'reset-yes':rankRemove(S.pid);try{localStorage.removeItem(SAVE_KEY);}catch(err){}S=JSON.parse(JSON.stringify(DEF));pendingChar=null;$('nick').value='';closeModal();show('select');toast('초기화했어요');break;
-    case 'ver':verTap++;clearTimeout(verTimer);verTimer=setTimeout(()=>verTap=0,1500);if(verTap>=5){verTap=0;$('adm-panel').hidden=false;toast('🛠 관리자 모드');}break;
-    case 'adm-lv':{const v=parseInt($('adm-lv').value,10);if(!(v>=1&&v<=100)){toast('1~100 사이로 입력');break;}const f=stageOf(S.level);S.level=v;S.xp=0;save();toast('Lv.'+v+'로 설정');if(stageOf(v)!==f)showEvolution(f,stageOf(v));renderSettings();break;}
-    case 'adm-xp':{const v=parseInt($('adm-xp').value,10);if(!(v>0)){toast('추가할 XP를 입력');break;}const r=gainXP(v);toast('+'+v+' XP · Lv.'+S.level);if(r.evo)showEvolution(r.from,r.to);renderSettings();break;}
+    case 'ver':if(IS_TOSS)break;verTap++;clearTimeout(verTimer);verTimer=setTimeout(()=>verTap=0,1500);if(verTap>=5){verTap=0;if(!$('adm-panel').hidden)break;openModal('<div style="text-align:center"><div class="panel-t" style="margin-bottom:8px">🛠 관리자 비밀번호</div><input id="adm-pin" class="nick-in" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="숫자 6자리" style="text-align:center;letter-spacing:6px"><div style="display:flex;gap:8px;margin-top:12px"><button class="kbtn ghost" data-act="modal-close">취소</button><button class="kbtn blue" data-act="adm-pin-ok">확인</button></div></div>');setTimeout(()=>{const i=$('adm-pin');if(i)i.focus();},100);}break;
+    case 'adm-pin-ok':{const v=($('adm-pin')||{}).value||'';if(admHash('ssuk-adm:'+v)===ADM_H){closeModal();$('adm-panel').hidden=false;toast('🛠 관리자 모드');}else{toast('비밀번호가 맞지 않아요');const i=$('adm-pin');if(i){i.value='';i.focus();}}break;}
+    case 'adm-lv':{const v=parseInt($('adm-lv').value,10);if(!(v>=1&&v<=100)){toast('1~100 사이로 입력');break;}admMark();const f=stageOf(S.level);S.level=v;S.xp=0;save();toast('Lv.'+v+'로 설정');if(stageOf(v)!==f)showEvolution(f,stageOf(v));renderSettings();break;}
+    case 'adm-xp':{const v=parseInt($('adm-xp').value,10);if(!(v>0)){toast('추가할 XP를 입력');break;}admMark();const r=gainXP(v);toast('+'+v+' XP · Lv.'+S.level);if(r.evo)showEvolution(r.from,r.to);renderSettings();break;}
   }
 });
 $('nick').addEventListener('keydown',e=>{if(e.key==='Enter')startFromSelect();});
