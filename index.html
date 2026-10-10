@@ -249,6 +249,17 @@ input{font-family:inherit}
 .fit-note{margin-top:6px}
 .nick-in.lockd{background:#f1ede4;color:var(--muted)}
 .nick-note{margin-top:6px}
+.go-big{flex-direction:column;gap:2px;padding:13px 16px;background:linear-gradient(135deg,#5BB450,#2f9a5a);box-shadow:0 5px 0 #23784a,0 8px 18px rgba(47,154,90,.3)}
+.go-big .go-t{font-size:1.3rem}.go-big small{font-family:inherit;font-size:.74rem;font-weight:700;opacity:.92}
+.tg{display:flex;align-items:center;gap:6px;margin-top:8px}.tg-l{font-size:.9rem}
+.tg-b{flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.16);overflow:hidden}
+.tg-b i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#ffe27a,#ffb23f);transition:width .4s ease}
+.tg-t{font-size:.7rem;color:#fff;min-width:44px;text-align:right;font-weight:700}
+.tg.fire .tg-b{animation:tgf 1.2s ease}.tg.fire .tg-t{color:#ffe27a}
+@keyframes tgf{0%,100%{box-shadow:none}30%{box-shadow:0 0 0 3px rgba(255,226,122,.7),0 0 16px rgba(255,210,63,.9)}}
+.rwn.tgn{background:#fff6d6;color:#7a5200;margin:0 0 6px}
+.nextp{background:#fff;border:2px solid #cfe9d6;border-radius:16px;padding:12px 14px}
+.nx-l{font-size:.82rem;line-height:1.55;padding:3px 0;color:var(--navy)}
 .fits{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .fitb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px 6px;border-radius:12px;background:#f7f2e4;border:2.5px solid transparent;font-size:.72rem;font-weight:900;color:var(--navy)}
 .fitb canvas{background:linear-gradient(180deg,#f3f9f1,#fff);border-radius:10px}
@@ -451,6 +462,7 @@ input{font-family:inherit}
     </div>
   </div>
   <div class="home-body">
+    <button class="kbtn go-big" id="h-go" data-act="go"><span class="go-t">▶ 이어서 여행</span><small id="h-go-s">–</small></button>
     <div class="boost">
       <div class="boost-h"><span class="boost-t" id="h-boost-t">⚡ 다음 레벨까지</span><span class="boost-v num" id="h-xp">0 / 0 XP</span></div>
       <div class="boost-bar"><i id="h-xpbar"></i></div>
@@ -487,6 +499,7 @@ input{font-family:inherit}
       <div class="gw" id="gw-quiz"><canvas id="cv-gw-quiz"></canvas><span class="gw-mp" id="gw-quiz-mp"></span><div class="gi"><div class="gn" id="gw-quiz-n">–</div><div class="gl" id="gw-quiz-l">–</div><div class="gb"><i id="gw-quiz-b"></i></div></div></div>
     </div>
     <div class="hud-row" style="margin-top:8px"><span class="hearts" id="q-hearts">❤️❤️❤️</span><span class="items" id="q-items"></span><span class="chip" id="q-mode" style="background:rgba(255,255,255,.14);color:#fff">–</span></div>
+    <div class="tg" id="q-tg"><span class="tg-l">🧭</span><div class="tg-b"><i id="q-tg-i"></i></div><span class="tg-t num" id="q-tg-t">0%</span></div>
     <div id="q-prog"></div>
     <div class="timer" id="q-timer" hidden><i id="q-timer-i"></i></div>
   </div>
@@ -519,6 +532,7 @@ input{font-family:inherit}
     <div id="r-ranks"></div>
     <div class="panel" id="r-wrong-p" hidden><div class="panel-h"><div class="panel-t">다시 볼 문제</div><span class="chip">복습 서재에 저장됨</span></div><div class="wrong-list" id="r-wrong"></div></div>
     <button class="kbtn purple" id="r-adxp" data-act="ad-xp" data-ad hidden>🎬 광고 보고 이번 여행 XP 두 배!</button>
+    <div class="nextp" id="r-next" hidden></div>
     <button class="kbtn" data-act="retry">🔄 다시 여행하기</button>
     <button class="kbtn ghost" data-act="home">🏠 홈으로</button>
   </div>
@@ -970,8 +984,10 @@ function gwBump(pre,xp){const g=$('gw-'+pre);g.classList.remove('pop');void g.of
   if(xp){const f=document.createElement('span');f.className='xpfloat';f.textContent='+'+xp;g.appendChild(f);setTimeout(()=>f.remove(),950);}}
 
 /* ── HOME ── */
+function recTrack(){return TRACKS.filter(t=>t.mode!=='review'&&S.level>=t.unlock).pop()||TRACKS[0];}
 function renderHome(){
   if(!S.char){show('select');return;}
+  {const rt=recTrack();$('h-go-s').textContent=rt.name+' · '+rt.modeName+' · 10문제';}
   gwRender('home');
   const cv=$('cv-hero');if(!cv._css)prep(cv,138);
   animate(cv,t=>drawChar(cv,S.char,stageOf(S.level),{t,lv:S.level}));
@@ -1480,7 +1496,7 @@ function startTrack(id){
   if(S.level<tr.unlock){toast('🔒 Lv.'+tr.unlock+'에 열리는 코스예요');return;}
   const qs=pickQs(tr).map(q=>prepQ(q,tr));if(!qs.length){toast('문제를 불러오지 못했어요');return;}
   const boss=BOSSES[tr.diff]?BOSSES[tr.diff][Math.floor(Math.random()*3)]:null;
-  R={tr,qs,i:0,ok:0,ng:0,xp:0,combo:0,maxCombo:0,lives:3,shield:S.char==='horse',hp:tr.hp||0,boss,res:[],wrongs:[],answered:false,timer:null,lvStart:S.level,stStart:stageOf(S.level),evo:null,rwN:0,rwLog:[],srsN:0,srsOk:0,pendingRw:null,fair:0,eloStart:S.elo||900,plan:tr.mode==='review'?null:tr._plan};
+  R={tr,qs,i:0,ok:0,ng:0,xp:0,combo:0,maxCombo:0,lives:3,shield:S.char==='horse',hp:tr.hp||0,boss,res:[],wrongs:[],answered:false,timer:null,lvStart:S.level,stStart:stageOf(S.level),evo:null,rwN:0,rwLog:[],srsN:0,srsOk:0,tg:0,tgN:0,lv0:S.level,pendingRw:null,fair:0,eloStart:S.elo||900,plan:tr.mode==='review'?null:tr._plan};
   $('q-track').textContent=tr.name;$('q-mode').textContent=tr.modeName;
   $('q-boss').hidden=!(tr.mode==='saryo'||tr.mode==='boss');
   if(boss){$('q-boss-i').textContent=boss[0];$('q-boss-n').textContent=boss[1];}
@@ -1494,6 +1510,13 @@ function countdown(done){
     if(k===0){setTimeout(()=>{ov.classList.remove('on');done();},550);return;}k--;setTimeout(step,650);};
   step();
 }
+// 시간 나침반 게이지: 맞힐수록 차고(연속 정답이면 더 많이), 틀리면 조금 줄어요. 가득 차면 '시간 가속' +15 XP
+const TG_BONUS=15;
+function tgRender(fire){const i=$('q-tg-i'),w=$('q-tg');if(!i||!R)return;i.style.width=Math.min(100,R.tg)+'%';$('q-tg-t').textContent=fire?'⚡ 가속!':Math.round(R.tg)+'%';
+  if(fire){w.classList.remove('fire');void w.offsetWidth;w.classList.add('fire');setTimeout(()=>{if(R){$('q-tg-t').textContent=Math.round(R.tg)+'%';}},1400);}}
+function tgStep(ok){if(!R)return 0;if(!ok){R.tg=Math.max(0,R.tg-30);tgRender();return 0;}
+  R.tg+=20+10*Math.min(Math.max(R.combo-1,0),2);if(R.tg<100){tgRender();return 0;}
+  R.tg=0;R.tgN++;R.xp+=TG_BONUS;const r=gainXP(TG_BONUS);if(r&&r.lvUps)toast('⬆️ LEVEL UP! Lv.'+S.level,true);sfx('combo');gwRender('quiz');tgRender(true);return TG_BONUS;}
 function renderQ(){
   const tr=R.tr,q=R.qs[R.i];R.answered=false;R.t0=performance.now();R.rewinding=!!q._rw;R.act=[];
   const mi=R.qs.slice(0,R.i+1).filter(x=>!x._rw).length,mt=R.qs.filter(x=>!x._rw).length;
@@ -1566,11 +1589,12 @@ function answer(choice){ // choice: index, or -1 timeout; for ox: 1/0
       if(R.lives>0&&!(tr.hp&&R.hp<=0)&&R.rwN<2){R.rwN++;R.pendingRw={from:q.node,to:b.to,depth:1,origin:q.node,path:[q.node,b.to]};}}
     fbHead=(choice===-1?'⏰ 시간 초과!':'❌ 아쉬워요!')+(shieldUsed==='item'?' (🛡️ 방어막 아이템으로 하트 보호)':shieldUsed?' (청마의 방어막으로 하트 보호)':'');
   }
-  if(!ok)sfx('ng');R.res[R.i]=ok;save();updBoss();
+  if(!ok)sfx('ng');const tgB=tgStep(ok);R.res[R.i]=ok;save();updBoss();
   $('q-hearts').textContent='❤️'.repeat(Math.max(0,R.lives))+'🖤'.repeat(3-Math.max(0,R.lives))+(R.shield?' 🛡️':'');
   $('q-combo').textContent=R.combo>=2?'🔥 '+R.combo+' 콤보':'';
   const ansTxt=tr.mode==='ox'?('이 설명은 '+(q.oxTruth?'맞아요(O)':'틀려요(X)')+' · 정답: '+q.o[q.a]):'정답: '+q.o[q.a];
   $('q-fb').innerHTML='<div class="fb '+(ok?'ok':'ng')+'"><div class="ft">'+fbHead+'</div><div class="fa">'+esc(ansTxt)+'</div>'+esc(q.exp)+'</div>';
+  if(tgB)$('q-fb').querySelector('.fb').insertAdjacentHTML('afterbegin','<div class="rwn tgn">⚡ <b>시간 가속!</b> 나침반 게이지가 가득 차서 +'+tgB+' XP</div>');
   if(R.srsNote)$('q-fb').querySelector('.fb').insertAdjacentHTML('beforeend','<div class="rwn srs">'+esc(R.srsNote)+'</div>');
   if(R.pendingRw){const p=R.pendingRw;$('q-fb').querySelector('.fb').insertAdjacentHTML('beforeend','<div class="rwn">⏪ <b>'+esc(evLabel(p.from))+'</b>의 원인을 찾아 <b>'+esc(evLabel(p.to))+'</b> 시점으로 시간 역류!</div>');}
   if(rw&&ok){$('q-fb').querySelector('.fb').insertAdjacentHTML('beforeend','<div class="rwn ok">🔗 '+rw.path.slice().reverse().map(n=>esc(evName(n))).join(' → ')+'</div>');}
@@ -1603,6 +1627,16 @@ if(AIT&&AIT.graniteEvent&&typeof AIT.graniteEvent.addEventListener==='function')
 function safeSet(v){if(v&&typeof v.bottom==='number')document.documentElement.style.setProperty('--sab',Math.max(0,v.bottom)+'px');}
 if(AIT&&AIT.SafeArea){try{safeSet(AIT.SafeArea.get());AIT.SafeArea.subscribe({onEvent:safeSet});}catch(e){}}
 function quitRace(){openModal('<div class="panel-t" style="margin-bottom:8px">여행을 그만둘까요?</div><div style="font-size:.86rem;color:var(--muted);line-height:1.6">지금까지 얻은 XP는 그대로 남아요.</div><div style="display:flex;gap:8px;margin-top:14px"><button class="kbtn ghost" data-act="modal-close">계속 여행하기</button><button class="kbtn red" data-act="quit-yes">그만두기</button></div>');}
+function nextHTML(){if(!R)return '';const tr=R.tr,lines=[];let btn=null;
+  const opened=TRACKS.filter(t=>t.mode!=='review'&&R.lv0<t.unlock&&S.level>=t.unlock).pop();
+  const due=srsDueIds().length,wrongN=(S.wrong||[]).length,nu=TRACKS.find(t=>t.mode!=='review'&&S.level<t.unlock),rt=recTrack();
+  if(opened){lines.push('🎉 <b>'+opened.name+'</b>가 새로 열렸어요! '+opened.modeName+'에 도전해 봐요');btn={id:opened.id,t:'🗺️ '+opened.name+' 바로 가기'};}
+  if(tr.mode!=='review'&&wrongN>=5&&due>=3){lines.push('🔁 다시 만날 문제 <b>'+due+'개</b> · 복습 서재에서 정리하면 기억이 오래가요');if(!btn)btn={id:6,t:'📚 복습 서재 가기'};}
+  if(nu&&!opened){const left=nu.unlock-S.level;lines.push('🎯 다음 코스 <b>'+nu.name+'</b>까지 '+(left<=1?'<b>1레벨</b>만 더!':left+'레벨 남았어요')+' (Lv.'+nu.unlock+')');}
+  else if(!nu&&S.level<100)lines.push('🏁 모든 코스가 열렸어요! Lv.100 위인 등극까지 '+(100-S.level)+'레벨');
+  if(!btn&&rt.id!==tr.id)btn={id:rt.id,t:'▶ '+rt.name+'로 이어서 여행'};
+  if(!lines.length&&!btn)return '';
+  return '<div class="panel-t" style="margin-bottom:6px">🧭 다음 목표</div>'+lines.map(l=>'<div class="nx-l">'+l+'</div>').join('')+(btn?'<button class="kbtn blue" style="margin-top:8px" data-act="track" data-id="'+btn.id+'">'+btn.t+'</button>':'');}
 function finish(){
   TQ.splice(0).forEach(x=>{if(x[1])TQ.push(x);}); // 시대 진입 같은 일반 알림은 결과 화면에서 버리고, 레벨업·업적 같은 중요한 알림만 남긴다
   clearInterval(R.timer);const tr=R.tr;const answered=R.ok+R.ng;const mt=R.qs.filter(x=>!x._rw).length;const pct=answered?Math.round(R.ok/mt*100):0;
@@ -1629,6 +1663,7 @@ function finish(){
   lbSubmit();const rax=$('r-adxp');if(rax){rax.dataset.used=(R.xp>0&&tr.mode!=='review')?'0':'1';}adRefresh();
   rankPush();const ra=myRank('all'),rw=myRank('week'),rf=myRank('fair');$('r-ranks').innerHTML=(RANK.state==='on'&&ra)?'<button class="daily" data-act="tab" data-tab="rank" style="background:linear-gradient(135deg,#8fd0ff,#2f7bff);box-shadow:0 5px 0 #1b4fc4;color:#fff"><span style="font-size:1.7rem">🏆</span><span class="di"><span class="dt">전체 '+ra.n+'위 · 이번 주 '+(rw?rw.n:'-')+'위 · 공정 '+(rf?rf.n:'-')+'위</span><span class="dd" style="display:block">함께한 여행자 '+ra.of+'명 · 순위 보기</span></span><span class="dg">›</span></button>':'';
   $('r-diag').innerHTML=diagHTML();
+  {const nx=nextHTML(),el=$('r-next');el.hidden=!nx;el.innerHTML=nx||'';}
   const wl=$('r-wrong');$('r-wrong-p').hidden=!R.wrongs.length;
   wl.innerHTML=R.wrongs.slice(0,8).map(q=>'<div class="wl">'+esc(q.q)+'<br><b>→ '+esc(q.o[q.a])+'</b></div>').join('');
   show('result');
@@ -1643,6 +1678,7 @@ function diagHTML(){
   return '<div class="panel"><div class="panel-h"><div class="panel-t">🧭 학습 진단</div><span class="chip">⚖️ 공정 +'+R.fair+'</span></div>'+
     (rows.length?'<div class="hint" style="margin-bottom:4px">⏪ 시간 역류로 찾아간 끊긴 고리</div>'+rows.join(''):'<div class="hint">이번 여행은 끊긴 고리 없이 다녀왔어요! 👍</div>')+
     (R.srsN?'<div class="row"><span>🔁 다시 만난 문제</span><b class="num">'+R.srsOk+' / '+R.srsN+' 정답</b></div>':'')+
+    (R.tgN?'<div class="row"><span>⚡ 시간 가속</span><b class="num">'+R.tgN+'번 · +'+(R.tgN*TG_BONUS)+' XP</b></div>':'')+
     '<div class="row"><span>실력 지수 <small>(문항 난이도로 보정)</small></span><b class="num">'+Math.round(S.elo||900)+(dElo?' <small style="color:'+(dElo>0?'var(--green)':'var(--red)')+'">'+(dElo>0?'▲':'▼')+Math.abs(dElo)+'</small>':'')+'</b></div>'+
     (cl?'<div class="coach" style="margin-top:8px">'+cl+'</div>':'')+'</div>';
 }
@@ -1676,6 +1712,7 @@ document.addEventListener('click',e=>{
     case 'change-char':{rankRemove(S.pid);const nick=($('nick').value||'').trim().slice(0,10)||S.nick;S=JSON.parse(JSON.stringify(DEF));S.char=pendingChar;S.nick=nick;S.outfit=pendingFit;S.fitLock=true;save();closeModal();show('home');toast('🧭 '+CHAR[S.char].name+'(으)로 새 여행 시작!');break;}
     case 'tab':show(el.dataset.tab==='home'?'home':el.dataset.tab);break;
     case 'track':startTrack(+el.dataset.id);break;
+    case 'go':startTrack(recTrack().id);break;
     case 'daily':openDaily();break;
     case 'daily-ans':answerDaily(+el.dataset.i);break;
     case 'ans':answer(+el.dataset.i);break;
@@ -1719,7 +1756,7 @@ $('nick').addEventListener('input',startLabel);
 $('ov-modal').addEventListener('click',e=>{if(e.target.id==='ov-modal'&&!$('ov-modal').dataset.lock){closeModal();if(current==='home')renderHome();}});
 
 /* INIT */
-show('select');
+show(S.char?'home':'select');
 rankInit();
 aitRestore();
 adLoad();
