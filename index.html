@@ -397,6 +397,10 @@ input{font-family:inherit}
       <div class="ci"><div class="ct" id="cont-name">–</div><div class="cs" id="cont-sub">–</div></div>
     </div>
     <button class="sel-new" id="sel-new" data-act="sel-new" hidden>🔁 다른 캐릭터로 새로 시작하기</button>
+    <div class="panel" id="sel-nick">
+      <div class="panel-h"><div class="panel-t">여행자 별명</div><span class="chip">언제든 바꿀 수 있어요</span></div>
+      <div class="nick-row"><input class="nick-in" id="nick" maxlength="10" placeholder="별명을 지어 주세요" autocomplete="off"></div>
+    </div>
     <div class="cards" id="sel-cards">
       <button class="ccard" id="card-tiger" data-act="pick" data-char="tiger">
         <span class="chip badge b-tiger">용맹형</span>
@@ -420,10 +424,6 @@ input{font-family:inherit}
       <div class="panel-h"><div class="panel-t" id="road-title">성장 로드맵</div><span class="chip">문제 맞히면 쑥쑥!</span></div>
       <div class="road" id="road"></div>
       <div class="perks" id="perks"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-h"><div class="panel-t">여행자 별명</div><span class="chip">언제든 바꿀 수 있어요</span></div>
-      <div class="nick-row"><input class="nick-in" id="nick" maxlength="10" placeholder="별명을 지어 주세요" autocomplete="off"></div>
     </div>
     <button class="kbtn" id="btn-start" data-act="start" disabled>캐릭터를 골라 주세요</button>
   </div>
