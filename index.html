@@ -261,6 +261,9 @@ input{font-family:inherit}
 .rwn.tgn{background:#fff6d6;color:#7a5200;margin:0 0 6px}
 .nextp{background:#fff;border:2px solid #cfe9d6;border-radius:16px;padding:12px 14px}
 .nx-l{font-size:.82rem;line-height:1.55;padding:3px 0;color:var(--navy)}
+.kbtn.dim{opacity:.55}
+.nick-in.shake{animation:nshake .4s}
+@keyframes nshake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .fits{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .fitb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px 6px;border-radius:12px;background:#f7f2e4;border:2.5px solid transparent;font-size:.72rem;font-weight:900;color:var(--navy)}
 .fitb canvas{background:linear-gradient(180deg,#f3f9f1,#fff);border-radius:10px}
@@ -960,11 +963,11 @@ function nickSel(){const lock=!!(S.char&&pendingChar===S.char),inp=$('nick'),not
   if(lock){inp.value=S.nick||'';note.hidden=false;note.innerHTML=S.nickChg?'🔒 별명은 이미 한 번 바꿨어요.':'별명은 <b>설정</b>에서 <b>한 번만</b> 바꿀 수 있어요.';$('nick-chip').textContent=S.nickChg?'변경 완료':'한 번 변경 가능';}
   else{note.hidden=true;$('nick-chip').textContent='나중에 한 번만 바꿀 수 있어요';}}
 function startLabel(){const b=$('btn-start');if(!b)return;b.disabled=false;const nick=($('nick').value||'').trim().slice(0,10);
-  if(S.char&&pendingChar!==S.char){b.textContent='🔁 '+CHAR[pendingChar].name+'(으)로 새로 시작';return;}
-  b.textContent=nick?'🧭 '+nick+josaRo(nick)+' 여행 떠나기':'✏️ 별명을 지어 주세요';}
+  if(S.char&&pendingChar!==S.char){b.classList.remove('dim');b.textContent='🔁 '+CHAR[pendingChar].name+'(으)로 새로 시작';return;}
+  b.classList.toggle('dim',!nick);b.textContent=nick?'🧭 '+nick+josaRo(nick)+' 여행 떠나기':'🧭 여행 떠나기';}
 function startFromSelect(){
   const nick=($('nick').value||'').trim().slice(0,10);
-  if(!nick){toast('별명을 먼저 지어 주세요!');$('nick').focus();return;}
+  if(!nick){toast('✏️ 맨 위 칸에 별명을 먼저 지어 주세요!');const n=$('nick');n.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>n.focus(),350);n.classList.remove('shake');void n.offsetWidth;n.classList.add('shake');return;}
   if(S.char&&S.char!==pendingChar){ // 캐릭터 변경 → 확인
     openModal('<div class="panel-t" style="margin-bottom:8px">캐릭터를 바꿀까요?</div><div style="font-size:.86rem;line-height:1.6;color:var(--muted)">지금까지의 레벨과 기록은 초기화되고 <b>'+CHAR[pendingChar].name+'</b>(으)로 Lv.1부터 다시 시작합니다.</div><div style="display:flex;gap:8px;margin-top:14px"><button class="kbtn ghost" data-act="modal-close">취소</button><button class="kbtn red" data-act="change-char">바꾸기</button></div>');return;}
   if(!(S.char===pendingChar&&S.fitLock)){S.outfit=pendingFit;S.fitLock=true;}
