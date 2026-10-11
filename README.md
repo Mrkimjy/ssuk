@@ -13,3 +13,10 @@
 
 - 주소: https://mrkimjy.github.io/ssuk/sangsik/
 - 설치 방법은 위와 같아요. 기록과 순위는 역사가 쑥쑥과 따로 저장돼요.
+
+# 세계사가 쑥쑥 (자매 앱)
+
+세계사 시간 여행 퀴즈 1,000문제 · 백호와 청마
+
+- 주소: https://mrkimjy.github.io/ssuk/world/
+- 기록과 순위는 다른 앱과 따로 저장돼요.
