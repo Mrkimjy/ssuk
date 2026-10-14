@@ -20,3 +20,11 @@
 
 - 주소: https://mrkimjy.github.io/ssuk/world/
 - 기록과 순위는 다른 앱과 따로 저장돼요.
+
+# 경제가 쑥쑥 (자매 앱)
+
+어린이 경제·금융 + 교과 경제 퀴즈 1,000문제 · 백호와 청마
+
+- 주소: https://mrkimjy.github.io/ssuk/econ/
+- 순위 설정: econ_setup.sql 을 Supabase SQL Editor에서 한 번 실행
+- 기록과 순위는 다른 앱과 따로 저장돼요.
