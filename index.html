@@ -1392,7 +1392,11 @@ function vNext(){if(vPlaying||!VQ.length)return;const k=VQ.shift();const a=ac();
   p.then(buf=>{if(!buf||S.sound===false||adPlaying){vPlaying=false;vNext();return;}const s=a.createBufferSource(),g=a.createGain();g.gain.value=1;s.buffer=buf;s.connect(g);g.connect(a.destination);s.onended=()=>{vPlaying=false;vNext();};s.start();}).catch(()=>{vPlaying=false;vNext();});}
 function voice(k){if(S.sound===false||adPlaying||!VOICE_SRC[k])return false;if(VQ.length>=2)VQ.shift();VQ.push(k);vNext();return true;}
 // 앱을 열고 처음 화면을 누를 때 "역사가 쑥쑥!" (브라우저는 사용자가 누르기 전에는 소리를 못 내요)
-let vStarted=false;document.addEventListener('pointerdown',()=>{if(vStarted)return;vStarted=true;['ok','stage','congrats','lvup'].forEach(vLoad);voice('start');},{capture:true});
+let vStarted=false;
+function vGo(){if(vStarted)return;vStarted=true;['ok','stage','congrats','lvup','ng'].forEach(vLoad);voice('start');}
+function vTry(){if(vStarted)return;const a=ac();if(!a)return;if(a.state==='running'){vGo();return;}try{const p=a.resume();if(p&&p.then)p.then(()=>{if(a.state==='running')vGo();}).catch(()=>{});}catch(e){}}
+setTimeout(vTry,400);setTimeout(vTry,1500);document.addEventListener('visibilitychange',()=>{if(!document.hidden)vTry();});
+document.addEventListener('pointerdown',()=>{if(vStarted)return;const a=ac();if(a&&a.state==='running')vGo();else if(a){try{a.resume().then(vGo).catch(()=>{});}catch(e){}}},{capture:true});
 function sfx(k){if(S.sound===false||adPlaying)return;const vk=k==='combo'?'ok':k;if(VOICE_SRC[vk]&&vk!=='start'){voice(vk);if(k==='combo')try{SFX.combo();}catch(e){}}else{try{SFX[k]&&SFX[k]();}catch(e){}}hap(HAP[k]);}
 /* ═══════════ 앱 생명주기: 백그라운드·광고 중 소리/타이머 멈춤, 저장 즉시 반영 ═══════════ */
 let adPlaying=false,appHidden=false;
